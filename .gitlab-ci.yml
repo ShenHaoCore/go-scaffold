@@ -25,6 +25,11 @@ lint:
   stage: lint
   extends: .default_go
   script:
+    # before_script 把 GOPATH 指到项目内（为让模块缓存落到 cache 路径），副作用是
+    # GOBIN 也变成 $CI_PROJECT_DIR/.go/bin —— 该目录不在 PATH 上，于是 `go install`
+    # 装好的工具都找不到。这里把 GOBIN 钉回镜像自带路径。
+    - go env -w GOBIN=/usr/local/bin
+    - make setup-lint
     - make lint
 
 # goctl / go-zero / templates 版本门禁（不含完整 make gen：镜像无 protoc）
@@ -32,6 +37,8 @@ scaffold-check:
   stage: lint
   extends: .default_go
   script:
+    # 同上：否则 goctl 装到未在 PATH 上的 GOBIN 目录，check-goctl 必然失败
+    - go env -w GOBIN=/usr/local/bin
     - go install github.com/zeromicro/go-zero/tools/goctl@v1.7.3
     - make check-goctl check-go-zero check-templates
 

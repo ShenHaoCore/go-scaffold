@@ -1,7 +1,7 @@
 {{/*
   警告：goctl 默认 kube 模板，非本仓生产真源。
   - 下方 tcpSocket 仅验端口开闭，不等于 HTTP /health 或 gRPC Health 语义。
-  - Probe 未设 timeoutSeconds；生产须 ≥ HealthCheckTimeout（见方案 §4.5）。
+  - Probe 未设 timeoutSeconds；生产须 ≥ HealthCheckTimeout（config/*.yaml）。
   - HPA 已用 autoscaling/v2（勿再用 v2beta2）。
   生产清单：deploy/deployment.yaml（api=httpGet /health*；rpc=exec grpc_health_probe）。
   见 templates/README.md
@@ -37,13 +37,13 @@ spec:
             port: {{.Port}}
           initialDelaySeconds: 5
           periodSeconds: 10
-          # timeoutSeconds: 建议 ≥ HealthCheckTimeout（方案 §4.5）
+          # timeoutSeconds: 建议 ≥ HealthCheckTimeout（config/*.yaml）
         livenessProbe:
           tcpSocket:
             port: {{.Port}}
           initialDelaySeconds: 15
           periodSeconds: 20
-          # timeoutSeconds: 建议 ≥ HealthCheckTimeout（方案 §4.5）
+          # timeoutSeconds: 建议 ≥ HealthCheckTimeout（config/*.yaml）
         resources:
           requests:
             cpu: {{.RequestCpu}}m

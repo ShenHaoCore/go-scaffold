@@ -49,7 +49,7 @@ func main() {
 		hs.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 		grpc_health_v1.RegisterHealthServer(grpcServer, hs)
 	})
-	// Unary + Stream：Recovery → Trace → Lang（实施方案 §4.11）
+	// Unary + Stream：Recovery → Trace → Lang → Error（Error 不可省，否则错误码被降级为 codes.Unknown）
 	grpcx.RegisterServerInterceptors(s)
 	defer s.Stop()
 

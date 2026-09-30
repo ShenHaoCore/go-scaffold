@@ -1,6 +1,6 @@
 .PHONY: init deps tools gen build docker docker-build test test-coverage lint clean \
 	up down run run-api run-rpc run-all dev \
-	migrate-up migrate-down migrate-force setup-migrate \
+	migrate-up migrate-down migrate-force setup-migrate setup-lint \
 	check-goctl check-go-zero check-templates check-protoc init-templates update-templates \
 	newlogic print-config-key
 
@@ -20,14 +20,18 @@ deps:
 
 # 环境准备唯一入口（与 README / go.mod 三处版本一致）
 # protoc 本体须系统安装；此处安装 Go 插件
+#
+# 顺序：代码生成工具在前，golangci-lint 最后。
+# 理由：golangci-lint 是本组里唯一会因 Go 版本而构建失败的（见 setup-lint 注释），
+# make 遇错即停，把它排在前面会让 goctl / protoc-gen-* / air 一起装不上。
 tools:
 	$(GO) install github.com/zeromicro/go-zero/tools/goctl@v$(GOCTL_WANT)
 	$(GO) install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_WANT)
 	$(GO) install github.com/mattn/goreman@$(GOREMAN_WANT)
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_WANT)
 	$(GO) install google.golang.org/protobuf/cmd/protoc-gen-go@v1.35.1
 	$(GO) install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 	@command -v air >/dev/null 2>&1 || $(GO) install github.com/air-verse/air@latest
+	$(MAKE) setup-lint
 	@echo "tools installed: goctl@$(GOCTL_WANT) migrate@$(MIGRATE_WANT) goreman@$(GOREMAN_WANT) golangci-lint@$(GOLANGCI_LINT_WANT) protoc-gen-go/grpc"
 	@command -v protoc >/dev/null 2>&1 || echo "WARN: protoc not in PATH (required by make gen); install from https://grpc.io/docs/protoc-installation/"
 
@@ -175,8 +179,30 @@ test-coverage:
 	$(GO) test ./... -coverprofile=coverage.out || true
 	@if [ -f coverage.out ]; then $(GO) tool cover -func=coverage.out; else echo "WARN: coverage.out not generated"; fi
 
+# 安装 golangci-lint（版本与 .golangci.yml 头注释 / make tools 一致）；CI 的 lint job 依赖它。
+#
+# 版本约束（实测）：@v1.55.2 拉到的 golang.org/x/tools v0.14.0 用
+# `var _ [-delta*delta]int` 做编译期断言，Go ≥1.25 改了 token.FileSet 布局后断言失败：
+#   x/tools@v0.14.0/internal/tokeninternal/tokeninternal.go:78:9:
+#     invalid array length -delta * delta (constant -64 of type int64)
+# 即 v1.55.2 无法用 Go ≥1.25 构建（CI 的 golang:1.22 镜像不受影响；Go 1.25+ 的本机会失败）。
+# 要在新 Go 上本地跑 lint，把 GOLANGCI_LINT_WANT 提到 v1.64.x（已实测 v1.64.8 可构建）。
+setup-lint:
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_WANT)
+
+# lint：优先 golangci-lint。工具缺失时**不再静默降级**为 go vet
+# （那会让 .golangci.yml 成为摆设、CI 假绿）；本地临时降级须显式指定：
+#   make lint LINT_FALLBACK=go-vet
 lint:
-	@if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run ./...; else $(GO) vet ./...; fi
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	elif [ "$(LINT_FALLBACK)" = "go-vet" ]; then \
+		echo "WARN: golangci-lint not found; LINT_FALLBACK=go-vet -> go vet ./..."; \
+		$(GO) vet ./...; \
+	else \
+		echo "ERROR: golangci-lint not found. Run: make setup-lint (or make lint LINT_FALLBACK=go-vet to downgrade)"; \
+		exit 1; \
+	fi
 
 clean:
 	rm -rf output coverage coverage.out coverage.html

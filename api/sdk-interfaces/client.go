@@ -89,7 +89,7 @@ type HTTPAdapterConfig struct {
 	RetryOnStatus []int  // 可选
 }
 
-// CallOption RPC 出站可选参数（P2-T00 敲定具体实现；风格对齐标准库 Option）。
+// CallOption RPC 出站可选参数（风格对齐标准库 Option；具体实现由业务仓落地）。
 type CallOption func(*CallOptions)
 
 // CallOptions RPC 调用选项。

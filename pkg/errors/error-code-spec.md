@@ -92,7 +92,9 @@ func init() {
 | `KindOf(code)` / `ParseKind(code)` | Code 第 4 位 | 类型位判定 |
 | `SpecOf(code)` / `RegisteredCodes()` | 登记表 | 查询与自检 |
 
-- **未登记的码一律 fail-closed**：`HTTPStatus` 返回 500、`Kind` 视为系统位，不猜测、不 panic。
+- **形非法的码一律 fail-closed**：长度不足（`COM`）或第 4 位不是已定义类型位（`COMX001` / `COM6001`）时，`ParseKind` 返回 `KindSystem`、`HTTPStatus` 返回 500，不猜测、不 panic。
+- **形合法但未登记的码**（如 `USR3001`）仍按类型位推导 HTTP（→ 422）；只有文案回退为原始 code。两者差别见 `pkg/errors/errors_test.go` 的 `TestHTTPStatus` 与 `spec_test.go` 的 `TestHTTPStatus_MalformedCodeFailsClosed`。
+- `Translate` 在码未登记时回退为原始 code（至少不丢码）；模板缺占位符时回退模板原文并打 warn，不 panic。
 - HTTP 侧与 gRPC 侧的类型位映射**只有一份**：gRPC 由 HTTP 状态码纯对照推导（`pkg/response/grpc.go` 的 `httpToGRPC`），不再各自解析类型位，避免新增业务码时两处规则漂移。
 - `go test ./pkg/errors/...` 会校验：类型位与 Code 一致、内置码已登记、非法码降级行为。
 
