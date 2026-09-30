@@ -1,0 +1,22 @@
+syntax = "v1"
+
+info (
+	title: "Health"
+	desc:  "健康检查（文档占位，不 import 到 main.api）"
+)
+
+type (
+	HealthCheckResp {}
+	HealthLiveResp  {}
+)
+
+@server (
+	group: health
+)
+service scaffold-api {
+	@handler Health
+	get /health (HealthCheckResp) returns (HealthCheckResp)
+
+	@handler HealthLive
+	get /health/live (HealthLiveResp) returns (HealthLiveResp)
+}

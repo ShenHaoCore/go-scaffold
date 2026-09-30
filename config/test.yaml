@@ -1,0 +1,32 @@
+# CI / 自动化环境（APP_ENV=test）
+# 勿把 test 当成预发：Auth 用 require 门闩，禁止依赖 default 的 Mode=dev。
+
+Log:
+  Level: info
+  Mode: console
+  Encoding: json
+  TimeFormat: 2006-01-02T15:04:05.000Z07:00
+  Stat: false
+
+Auth:
+  Mode: require
+
+# CI 内可读依赖明细；公网/prod 见 prod.yaml ExposeDependencies=false
+HealthProbe:
+  ExposeDependencies: true
+
+# VPC 内（含跳板机 ECS）优先内网 Endpoint
+Cloud:
+  PreferInternalEndpoint: true
+
+Middlewares:
+  Recover: false
+  Trace: false
+
+RpcServer:
+  Name: scaffold-rpc
+  ListenOn: 0.0.0.0:8081
+  Health: false
+  Middlewares:
+    Recover: false
+    Trace: false

@@ -1,0 +1,5 @@
+# 本地覆盖（可选）。复制本文件为 config-local.yaml 后按需修改；勿提交含密钥的 config-local.yaml。
+# 合并顺序：default.yaml → {APP_ENV}.yaml → config-local.yaml → .env / 环境变量
+#
+# Log:
+#   Level: debug

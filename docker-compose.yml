@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:18.0
+    container_name: scaffold-postgres
+    environment:
+      POSTGRES_USER: scaffold
+      POSTGRES_PASSWORD: scaffold123
+      POSTGRES_DB: scaffold
+    ports:
+      - "5432:5432"
+    volumes:
+      # PG 18 官方镜像数据根为 /var/lib/postgresql（非 .../data）
+      - ./data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scaffold -d scaffold"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: scaffold-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20

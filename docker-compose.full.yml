@@ -1,0 +1,17 @@
+services:
+  etcd:
+    image: bitnami/etcd:3.5
+    container_name: scaffold-etcd
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:2379
+    ports:
+      - "2379:2379"
+
+  # Phase 1 仅预留；health 中 mq 强制 skipped，应用不依赖本容器
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.1.4
+    container_name: scaffold-rocketmq-namesrv
+    command: ./mqnamesrv
+    ports:
+      - "9876:9876"

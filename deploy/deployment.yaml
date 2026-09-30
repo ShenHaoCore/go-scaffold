@@ -1,0 +1,290 @@
+# Demo Kubernetes 清单（Phase 1 示例，非完整生产基线）
+#
+# 使用前：
+# 1. cp secret.example.yaml secret.yaml → 填密 → kubectl apply -f secret.yaml（勿提交 secret.yaml）
+# 2. kubectl apply -f deployment.yaml
+# 3. Auth.Mode=require 仅为内部门闩；禁止将 Service 暴露公网直至 Mode=sdk
+# 4. RPC 无服务间 mTLS；依赖 NetworkPolicy（rpc Ingress + api Egress）+ ClusterIP
+# 5. postgres/redis Deployment 须带 label app=postgres / app=redis，否则 api Egress 策略不匹配
+# 6. 本清单默认不启用 Etcd 热更；若设置 ETCD_HOSTS，须取消下方 etcd egress 注释
+# 7. 探针：api/rpc 均 Pod 内 exec（避开 NetworkPolicy 挡 kubelet）；/health 本机回环免 Token
+# 8. 云依赖 egress：ipBlock Cloud.VPCCidr（默认 172.16.0.0/16）放行 5432/6379/443/8080
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scaffold-config
+  labels:
+    app.kubernetes.io/name: scaffold
+data:
+  APP_ENV: "prod"
+  HEALTH_EXPOSE_DEPENDENCIES: "false"
+  # 阿里云 VPC 统一约定（与 config Cloud / NetworkPolicy 对齐）
+  CLOUD_REGION: "cn-shenzhen"
+  CLOUD_VPC_CIDR: "172.16.0.0/16"
+  CLOUD_PREFER_INTERNAL: "true"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "scaffold"
+  DB_USER: "scaffold"
+  DB_SSLMODE: "require"
+  # 勿默认写入 REDIS_HOST；一旦配置须真实 Ping（失败可致 readiness 503）
+  # REDIS_HOST: "redis:6379"
+  # REDIS_USER: "scaffold_user"
+  # REDIS_TLS: "true"
+  # OSS_ENDPOINT: "oss-cn-shenzhen-internal.aliyuncs.com"
+  # OSS_BUCKET: "CHANGE_ME"
+  # MQ_ENDPOINT: "rmq-cn-xxx-vpc.cn-shenzhen.rmq.aliyuncs.com:8080"
+  # MQ_INSTANCE: "rmq-cn-xxx"
+  # MQ_TOPIC: "scaffold_event"
+  # MQ_GROUP: "GID_scaffold_test"
+  # SLS_ENDPOINT: "cn-shenzhen-internal.log.aliyuncs.com"
+  # SLS_PROJECT: "CHANGE_ME"
+  # SLS_LOGSTORE: "scaffold-test"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: scaffold-rpc-ingress
+  labels:
+    app.kubernetes.io/name: scaffold
+spec:
+  # Phase 1：无服务间鉴权时，至少限制仅 api Pod 可访问 rpc
+  # 探针走 exec（本机），不依赖本策略放行 kubelet
+  podSelector:
+    matchLabels:
+      app: scaffold-rpc
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: scaffold-api
+      ports:
+        - protocol: TCP
+          port: 8081
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: scaffold-api-egress
+  labels:
+    app.kubernetes.io/name: scaffold
+spec:
+  # api 出站：rpc / postgres / redis / 云 VPC / DNS
+  podSelector:
+    matchLabels:
+      app: scaffold-api
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: scaffold-rpc
+      ports:
+        - protocol: TCP
+          port: 8081
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # 云 RDS / Redis / OSS / RocketMQ / SLS（CIDR 须与 CLOUD_VPC_CIDR 一致）
+    - to:
+        - ipBlock:
+            cidr: 172.16.0.0/16  # = Cloud.VPCCidr / CLOUD_VPC_CIDR
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 443   # OSS/SLS HTTPS（含 -internal）
+        - protocol: TCP
+          port: 8080  # RocketMQ 5.x Proxy
+    # 集群 DNS（各发行版 kube-dns/coredns 标签不一，按端口放行）
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # 启用 Etcd 热更时取消注释（并给 etcd Pod 打 label app=etcd）
+    # - to:
+    #     - podSelector:
+    #         matchLabels:
+    #           app: etcd
+    #   ports:
+    #     - protocol: TCP
+    #       port: 2379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scaffold-api
+  labels:
+    app: scaffold-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scaffold-api
+  template:
+    metadata:
+      labels:
+        app: scaffold-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scaffold-api
+          image: registry.example.com/scaffold:v0.1.0 # 勿用 :latest；按发布打不可变 tag
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          command: ["./scaffold-api", "-f", "config"]
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: scaffold-config
+            - secretRef:
+                name: scaffold-secrets
+          env:
+            # 显式再声明，避免遗漏；Auth 仍为 Phase1 门闩——勿对公网暴露本 Service
+            - name: APP_ENV
+              value: "prod"
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - wget -qO- http://127.0.0.1:8080/health/live >/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - wget -qO- http://127.0.0.1:8080/health >/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scaffold-rpc
+  labels:
+    app: scaffold-rpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scaffold-rpc
+  template:
+    metadata:
+      labels:
+        app: scaffold-rpc
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scaffold-rpc
+          image: registry.example.com/scaffold:v0.1.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          command: ["./scaffold-rpc", "-f", "config"]
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: scaffold-config
+            - secretRef:
+                name: scaffold-secrets
+          env:
+            - name: APP_ENV
+              value: "prod"
+          # exec 本机探测，兼容「仅 api→rpc」Ingress NetworkPolicy
+          livenessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:8081"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:8081"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scaffold-api
+  labels:
+    app: scaffold-api
+spec:
+  # 建议 ClusterIP；公网入口走 Ingress 且仅在 Mode=sdk 后开放
+  type: ClusterIP
+  selector:
+    app: scaffold-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scaffold-rpc
+  labels:
+    app: scaffold-rpc
+spec:
+  type: ClusterIP
+  selector:
+    app: scaffold-rpc
+  ports:
+    - port: 8081
+      targetPort: 8081

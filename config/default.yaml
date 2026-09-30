@@ -1,0 +1,110 @@
+Name: scaffold-api
+Host: 0.0.0.0
+Port: 8080
+Timeout: 8000
+
+# 禁用 go-zero 内置 Recover/Trace；业务链见 internal/middleware（COM1001 + pkg/trace）
+Middlewares:
+  Recover: false
+  Trace: false
+
+Log:
+  ServiceName: scaffold
+  Mode: file
+  Encoding: json
+  Level: info
+  # 规范时间格式（RFC3339 milli）；JSON 结构化；Stat 关闭以降噪（云上/SLS）
+  TimeFormat: 2006-01-02T15:04:05.000Z07:00
+  Stat: false
+  Path: logs
+  KeepDays: 7
+
+# 私有 VPC 统一约定（deploy NetworkPolicy 须与 VPCCidr 对齐）
+Cloud:
+  Region: cn-shenzhen
+  VPCCidr: 172.16.0.0/16
+  PreferInternalEndpoint: false  # 本地/隧道默认公网或本机端口；test/prod 见对应 yaml
+
+# 须明显小于 Rest Timeout，避免 /health 与 TimeoutHandler 竞态
+HealthCheckTimeout: 3s
+# 本地/默认暴露依赖明细；prod.yaml 覆盖为 false
+HealthProbe:
+  ExposeDependencies: true
+
+Auth:
+  Mode: dev  # 本地桩；prod 环境见 config/prod.yaml（require）
+
+DB:
+  # 文档字段：业务固定 pgx stdlib；仅允许 postgres/postgresql/pgx（空则按 postgres）
+  Driver: postgres
+  # 口令勿写入镜像/仓库；本地用 .env 的 DB_* / DB_DSN_SQL，或 make 注入
+  DataSource: ""
+
+RedisConf:
+  # 留空则 readiness skipped；配置 REDIS_HOST 后须真实 Ping（失败→degraded/503）
+  Host: ""
+  Type: node
+  User: "" # 阿里云自定义账号名（如 scaffold_user）；与 REDIS_USER 对应
+  Pass: ""
+
+# 阿里云 OSS：四项齐备才探活；业务上传后续模块再接入
+OSS:
+  Endpoint: ""
+  Bucket: ""
+  AccessKeyID: ""
+  AccessKeySecret: ""
+
+# 阿里云 RocketMQ 5.x：配置 MQ_ENDPOINT 后启动探活；VPC 内网免密可空 AK
+MQ:
+  Endpoint: ""
+  InstanceID: ""
+  Topic: ""
+  Group: ""
+  AccessKey: ""
+  AccessKeySecret: ""
+
+# 阿里云 SLS：五项齐备才探活并挂 logx 额外 Writer（业务仍用 pkg/logger）
+SLS:
+  Endpoint: ""
+  Project: ""
+  Logstore: ""
+  AccessKeyID: ""
+  AccessKeySecret: ""
+  Topic: ""
+  Source: ""
+
+Etcd:
+  Hosts: []
+  Key: scaffold/config
+
+RpcServer:
+  Name: scaffold-rpc
+  ListenOn: 0.0.0.0:8081
+  # Health 由 cmd/rpc 显式 SetServingStatus("", SERVING) 注册；勿与内置重复
+  Health: false
+  # 使用 pkg/grpcx Recover/Trace/Lang/Error；禁用 go-zero 内置（避免泄漏 panic 文案 / 双轨 Trace）
+  Middlewares:
+    Recover: false
+    Trace: false
+  # Etcd:
+  #   Hosts:
+  #     - 127.0.0.1:2379
+  #   Key: scaffold.rpc
+
+# 本进程作为 gRPC **客户端** 的下游目标（HTTP 网关调 RPC 服务时填这里）。
+# Targets 留空 = 不建立任何出站连接，HTTP 与 RPC 两侧各自可独立启动。
+# 拦截器链由 pkg/grpcx 注入：Trace → Lang → Error（在 zrpc 自带拦截器内侧）。
+RpcClient:
+  # false（默认）：非阻塞拨号 —— 下游未起不阻断本进程启动，
+  #   只体现为 health rpc:<name>=degraded 与首次调用 Unavailable。
+  # true：沿用 zrpc 原生阻塞拨号，下游不可用则启动失败。
+  BlockDial: false
+  Targets: {}
+  # Targets:
+  #   user:                                        # key 即服务名，也是 svc.RpcClients 的键
+  #     Endpoints:
+  #       - 127.0.0.1:9001                         # 直连（开发 / 单实例）
+  #   order:
+  #     Target: "etcd://127.0.0.1:2379/order.rpc"  # 经 etcd 服务发现
+  #     Timeout: 2000                              # 毫秒；zrpc 默认 2000
+  #   # 定位方式优先级：Endpoints > Target > Etcd（Load 时对多项并存只告警）

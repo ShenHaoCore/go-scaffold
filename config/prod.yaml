@@ -1,0 +1,38 @@
+Log:
+  Level: info
+  Mode: file
+  Encoding: json
+  TimeFormat: 2006-01-02T15:04:05.000Z07:00
+  Stat: false
+
+Auth:
+  Mode: require  # Phase 1 门闩；test|prod 须 AUTH_ALLOW_PHASE1_GATE=true；正式鉴权用 Mode=sdk
+  # APP_ENV=prod 禁止 Mode=dev；未设 AUTH_ALLOW_PHASE1_GATE 时 Mode=require 启动失败
+
+# /health 不暴露 db/redis 依赖名，仅整体 status
+HealthProbe:
+  ExposeDependencies: false
+
+# VPC 内网 Endpoint（OSS/SLS）；NetworkPolicy 须放行 Cloud.VPCCidr
+Cloud:
+  PreferInternalEndpoint: true
+
+# 与 default 一致：禁用 go-zero 内置 Recover/Trace
+Middlewares:
+  Recover: false
+  Trace: false
+
+# 生产镜像不内嵌库口令；须由 Secret/环境变量提供（DB_DSN_SQL 或 DB_USER/DB_PASS/...）
+DB:
+  DataSource: ""
+
+RpcServer:
+  ListenOn: 0.0.0.0:8081
+  Health: false
+  Middlewares:
+    Recover: false
+    Trace: false
+  # Etcd:
+  #   Hosts:
+  #     - etcd:2379
+  #   Key: scaffold.rpc

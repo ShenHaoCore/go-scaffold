@@ -1,0 +1,29 @@
+# Binaries / build
+output/
+*.exe
+*.test
+*.out
+coverage
+coverage.out
+coverage.html
+
+# Env & secrets
+.env
+config/config-local.yaml
+deploy/secret.yaml
+*.pem
+*.key
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local data
+data/
+vendor/
+
+# goctl temp
+*.go.bak
