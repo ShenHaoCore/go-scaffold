@@ -21,6 +21,10 @@ deploy/secret.yaml
 .DS_Store
 Thumbs.db
 
+# 本地 AI 助手工作区（含会话记忆与来源路径，勿入库）
+.workbuddy/
+.cursor/
+
 # Local data
 data/
 vendor/
