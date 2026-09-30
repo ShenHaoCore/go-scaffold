@@ -48,7 +48,7 @@ return nil, bizerr.NewFromContext(ctx, bizerr.CodeInvalidParam, map[string]any{"
 [go-zero 自带] → Recovery → Trace → Lang → Error → Handler
 ```
 
-其中 `Error` 拦截器不可省——gRPC 对 handler 返回的非 status error 会降级为 `codes.Unknown` 并丢弃错误码（详见 [`error-code-spec.md`](./pkg/errors/error-code-spec.md) 的 gRPC 段）。`Trace`/`Recover` 由 `config.applyBuiltinMiddlewarePolicy` 强制关掉 go-zero 内置版本，避免双轨 trace 与 panic 文案泄漏。
+其中 `Error` 拦截器不可省——gRPC 对 handler 返回的非 status error 会降级为 `codes.Unknown` 并丢弃错误码（详见 [`error-code-spec.md`](./pkg/errors/error-code-spec.md) 的 gRPC 段）。`Trace`/`Recover` 由 `internal/config` 的 `applyBuiltinMiddlewarePolicy`（`Load` 末尾调用，非导出）强制关掉 go-zero 内置版本，避免双轨 trace 与 panic 文案泄漏。
 
 **客户端**：在 `config/*.yaml` 的 `RpcClient.Targets` 里按下游服务名配置，`internal/svc.NewServiceContext` 自动装配为 `svcCtx.RpcClients`：
 
@@ -79,11 +79,11 @@ cli := userpb.NewUserClient(conn)
 |----|------|
 | 鉴权 | `dev` 放行；`require` = 非空 Bearer（非 JWT）；公网须等 `Mode=sdk` |
 | 健康 | `/health` degraded→503；`/health/live` 存活；手写不走 gen；RPC 侧另有 `rpc:<服务名>` 探针 |
-| 错误码 | 唯一真源是 `pkg/errors` 注册表（`Register` / `HTTPStatus`）；未登记的码 fail-closed 到 500，见 `error-code-spec.md` |
+| 错误码 | 唯一真源是 `pkg/errors` 注册表（`Register` / `HTTPStatus`）；**形非法**的码 fail-closed 到 500，形合法但**未登记**的码仍按类型位推导 HTTP（仅文案回退为原始 code），见 `error-code-spec.md` |
 | 配置 | `APP_ENV` 选 yaml；`DB_DSN` 仅 migrate；`ETCD_HOSTS` 热更（白名单见 `internal/config/hotkeys.go`） |
 | ORM | go-zero model + sqlx；logic 只依赖 `internal/repo`；软删表登记 `SoftDeleteRequiredTables`（默认可空） |
 | SDK | 本仓不引入业务 SDK；埋点等由业务 `go get`，契约见 `integration-spec.md` |
-| HTTP 框架中间件 | go-zero 内置 Recover/Trace 已强制关闭；Breaker/Shedding/MaxConns/MaxBytes 仍开启，命中时只写状态码不写 body，绕过统一响应体（启动日志会列出） |
+| HTTP 框架中间件 | go-zero 内置 Recover/Trace 已强制关闭（自有链负责）；Breaker/Shedding/MaxConns/MaxBytes 仍开启，命中时只写状态码不写 body，是**唯一**绕过统一响应体的路径（启动日志会列出）；框架自身抛出的其他错误已由 `response.InstallFrameworkErrorHandler()`（`cmd/api` 启动时安装）归一到统一响应体 |
 
 ## 目录
 
