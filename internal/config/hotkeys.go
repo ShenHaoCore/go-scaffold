@@ -130,9 +130,13 @@ func ApplyHotUpdate(patch map[string]any) {
 			logWarnf("hot update rejected (requires restart): %s", f.Key)
 			continue
 		}
+		// 新增「可热更」键时必须在此补 case：hotFields 只声明策略与路径，
+		// 具体怎么写回内存仍由这里决定，漏补会静默什么都不做。
 		switch f.Key {
 		case keyLogLevel:
 			applyLogLevel(v)
+		default:
+			logWarnf("hot update has no apply handler, ignored: %s", f.Key)
 		}
 	}
 }

@@ -73,8 +73,11 @@ func main() {
 	defer s.Stop()
 
 	logx.Infof("Starting scaffold-rpc at %s APP_ENV=%s", c.RpcServer.ListenOn, env.AppEnv())
+	// 本骨架不装配 ServiceContext：RpcServer 生效，但 RpcClient.Targets 在此**不会**被拨号。
+	// rpc→rpc 出站请照 cmd/api 加 svc.NewServiceContext(c) 并用 svcCtx.RpcClients。
 	if n := len(c.RpcClient.Targets); n > 0 {
-		logx.Infof("rpc clients configured: %d target(s) (see RpcClient.Targets)", n)
+		logx.Infof("[warn] RpcClient.Targets has %d entr(ies) but this skeleton dials nothing; "+
+			"wire svc.NewServiceContext to use them", n)
 	}
 	s.Start()
 }

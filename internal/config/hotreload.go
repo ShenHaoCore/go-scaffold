@@ -126,17 +126,20 @@ func runEtcdWatchSession(ctx context.Context, etcd EtcdConf, tlsCfg *tls.Config)
 		}
 		// 从 Get 之后的版本开始 Watch，避免 Get→Watch 建立之间的事件丢失
 		rch = cli.Watch(ctx, etcd.Key, clientv3.WithRev(resp.Header.Revision+1))
+		// 只有 Get 成功才算「曾建立连接」。此处曾是无条件赋值，导致
+		// watchEtcd 每轮都把 backoff 重置为 1s，指数退避（maxBackoff）成死代码。
+		established = true
 	} else {
 		if ctx.Err() == nil {
 			logx.Errorf("hot-reload initial get failed: %v", err)
 		}
 		rch = cli.Watch(ctx, etcd.Key)
 	}
-	established = true
 	for wr := range rch {
 		if wr.Err() != nil {
-			return true, wr.Err()
+			return established, wr.Err()
 		}
+		established = true // 收到 watch 响应即视为已建立
 		for _, ev := range wr.Events {
 			if ev.Kv == nil {
 				continue
@@ -145,9 +148,9 @@ func runEtcdWatchSession(ctx context.Context, etcd EtcdConf, tlsCfg *tls.Config)
 		}
 	}
 	if ctx.Err() != nil {
-		return true, ctx.Err()
+		return established, ctx.Err()
 	}
-	return true, fmt.Errorf("etcd watch channel closed")
+	return established, fmt.Errorf("etcd watch channel closed")
 }
 
 func applyEtcdValue(raw []byte) {

@@ -11,6 +11,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc/connectivity"
 )
 
 func TestNewServiceContext_ProdRequiresDB(t *testing.T) {
@@ -104,4 +106,33 @@ func TestServiceContext_CloseNilRedisPing(t *testing.T) {
 	require.NoError(t, err)
 	ctx.Close()
 	ctx.Close() // 第二次须安全（RedisPing/DB 已清空）
+}
+
+// 契约：Close 必须和 NewServiceContext 失败路径的 cleanup 收同一份清单。
+// 曾经漏掉下游 gRPC 连接——cleanup 关了、Close 没关，成功启动的进程退出时连接不释放。
+func TestServiceContext_CloseReleasesRpcClients(t *testing.T) {
+	t.Setenv("APP_ENV", "dev")
+
+	ctx, err := svc.NewServiceContext(config.Config{
+		Auth: config.AuthConf{Mode: "dev"},
+		DB:   config.DBConf{},
+		RpcClient: config.RpcClientConf{
+			// 非阻塞拨号：指向无人监听的端口也能建出连接对象（首调才 Unavailable）
+			Targets: map[string]zrpc.RpcClientConf{
+				"downstream": {Endpoints: []string{"127.0.0.1:1"}},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, ctx.RpcClients)
+
+	conn, ok := ctx.RpcClients.Conn("downstream")
+	require.True(t, ok)
+	require.NotEqual(t, connectivity.Shutdown, conn.GetState())
+
+	ctx.Close()
+	require.Nil(t, ctx.RpcClients, "Close 须清空 RpcClients 字段")
+	require.Equal(t, connectivity.Shutdown, conn.GetState(), "Close 后连接须真正关闭，不得只置空字段")
+
+	ctx.Close() // 幂等：第二次不得 panic
 }

@@ -298,12 +298,20 @@ func NewServiceContext(c config.Config) (*ServiceContext, error) {
 	}, nil
 }
 
-// Close 释放进程级资源（DB / Redis / OSS / MQ / SLS 等）；Start 返回后由 defer 调用。幂等且并发安全。
+// Close 释放进程级资源（下游 gRPC 连接 / DB / Redis / OSS / MQ / SLS 等）；
+// Start 返回后由 defer 调用。幂等且并发安全。
+//
+// 与 NewServiceContext 失败路径的 cleanup 保持同一份清单——两条路径都必须收干净，
+// 否则成功启动后走 Close 会漏掉只在 cleanup 里关过的资源（下游 gRPC 连接曾如此）。
 func (s *ServiceContext) Close() {
 	if s == nil {
 		return
 	}
 	s.closeOnce.Do(func() {
+		if s.RpcClients != nil {
+			s.RpcClients.CloseAll()
+			s.RpcClients = nil
+		}
 		if s.DB != nil {
 			if err := s.DB.Close(); err != nil {
 				logx.Errorf("close db: %v", err)

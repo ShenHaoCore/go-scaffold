@@ -9,11 +9,17 @@ output/
 data/
 logs/
 tmp/
-tmpprobe/
 coverage.out
 coverage.html
 *.md
 !README.md
 deploy/secret.yaml
+
+# 本地覆盖层与证书：可含真实 DSN / AK-SK，禁止进镜像（对照 .gitignore）
+config/config-local.yaml
+config/*.local.yaml
+*.pem
+*.key
+
 .idea/
 .vscode/

@@ -69,7 +69,9 @@ cli := userpb.NewUserClient(conn)
 
 每个 target 会额外注册一条 health 探针 `rpc:<服务名>`（读 gRPC 连接状态，IDLE/CONNECTING 不算故障）。
 
-**边界**：`zrpc` 客户端传输层固定明文（`RpcClientConf` 无 TLS 字段），依赖 VPC 内网隔离；需要 TLS 须自行 `zrpc.WithTransportCredentials` 覆盖。服务端 Breaker / Shedding / Timeout 位于我们的 `Error` 拦截器**外侧**，它们产生的失败不带业务码，只能靠 yaml 关掉换取完全统一。
+注：`cmd/rpc` 是空骨架、不装配 `ServiceContext`，故 `RpcClient.Targets` 在 rpc 进程内**不会**被拨号；rpc→rpc 出站需照 `cmd/api` 加 `svc.NewServiceContext(c)` 后取 `svcCtx.RpcClients`。
+
+**边界**：`zrpc` 客户端传输层固定明文（`RpcClientConf` 无 TLS 字段），依赖 VPC 内网隔离；需要 TLS 须自行 `zrpc.WithTransportCredentials` 覆盖。服务端 Breaker / Shedding / Timeout 位于我们的 `Error` 拦截器**外侧**，它们产生的失败不带业务码，只能靠 yaml 关掉换取完全统一。`RpcClient.Targets` 是嵌套映射，**没有环境变量覆盖入口**（`applyEnvOverrides` 不处理它）——容器里改下游目标须挂载覆盖文件（`config/config-local.yaml`，最后合并）或重建镜像。
 
 ## 约定
 
@@ -100,6 +102,6 @@ micro-scaffold/
 | 命令 | 说明 |
 |------|------|
 | `make dev` | 一键本地起 |
-| `make build` / `test` / `lint` | 构建 / 测试 / 静态检查 |
+| `make build` / `test` / `setup-lint` + `lint` | 构建 / 测试 / 静态检查（lint 需先 `make setup-lint` 装 golangci-lint，不再静默降级为 `go vet`） |
 | `make migrate-up` / `migrate-down` | 迁移（须 `DB_DSN`） |
 | `make print-config-key` | Etcd Key 提示 |
