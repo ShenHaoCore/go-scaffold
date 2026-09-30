@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"micro-scaffold/pkg/env"
-	"micro-scaffold/pkg/secure"
+	"go-scaffold/pkg/env"
+	"go-scaffold/pkg/secure"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"go.etcd.io/etcd/client/pkg/v3/transport"

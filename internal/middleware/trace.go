@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/pkg/trace"
 )
 
 // TraceMiddleware 解析入站 Trace Header（含云 EagleEye / B3 / W3C）并写入 context + metadata。

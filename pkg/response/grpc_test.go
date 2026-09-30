@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/trace"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"

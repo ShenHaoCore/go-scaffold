@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"micro-scaffold/internal/svc"
-	"micro-scaffold/pkg/health"
+	"go-scaffold/internal/svc"
+	"go-scaffold/pkg/health"
 )
 
 type HealthLogic struct {

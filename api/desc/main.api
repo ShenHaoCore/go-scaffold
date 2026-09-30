@@ -1,7 +1,7 @@
 syntax = "v1"
 
 info (
-	title:   "Micro Scaffold API"
+	title:   "Go Scaffold API"
 	desc:    "通用微服务脚手架；业务 .api 由各服务自行添加并 import"
 	author:  "scaffold"
 	version: "v1"

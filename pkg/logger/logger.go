@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/pkg/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

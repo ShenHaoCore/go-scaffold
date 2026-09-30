@@ -7,8 +7,8 @@ import (
 	"net/http"
 {{if .HasRequest}}	"github.com/zeromicro/go-zero/rest/httpx"
 {{end}}	{{.ImportPackages}}
-{{if .HasRequest}}	bizerr "micro-scaffold/pkg/errors"
-{{end}}	"micro-scaffold/pkg/response"
+{{if .HasRequest}}	bizerr "go-scaffold/pkg/errors"
+{{end}}	"go-scaffold/pkg/response"
 )
 
 // 自定义：统一走 pkg/response（改 Success/Error 签名须同步本模板）

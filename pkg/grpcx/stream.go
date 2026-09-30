@@ -3,10 +3,10 @@ package grpcx
 import (
 	"context"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/logger"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/trace"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/logger"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/trace"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/logger"
-	"micro-scaffold/pkg/trace"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/logger"
+	"go-scaffold/pkg/trace"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
 )

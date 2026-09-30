@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"micro-scaffold/pkg/env"
-	bizerr "micro-scaffold/pkg/errors"
+	"go-scaffold/pkg/env"
+	bizerr "go-scaffold/pkg/errors"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

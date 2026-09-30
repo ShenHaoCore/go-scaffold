@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	logic "micro-scaffold/internal/logic/health"
-	"micro-scaffold/internal/svc"
+	logic "go-scaffold/internal/logic/health"
+	"go-scaffold/internal/svc"
 )
 
 // Health 手写实现：degraded/down → HTTP 503。

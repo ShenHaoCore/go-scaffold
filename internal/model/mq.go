@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/pkg/logger"
 
 	rmq "github.com/apache/rocketmq-clients/golang/v5"
 	"github.com/apache/rocketmq-clients/golang/v5/credentials"

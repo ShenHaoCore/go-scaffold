@@ -1,9 +1,9 @@
 package handler
 
 import (
-	healthHandler "micro-scaffold/internal/handler/health"
-	"micro-scaffold/internal/middleware"
-	"micro-scaffold/internal/svc"
+	healthHandler "go-scaffold/internal/handler/health"
+	"go-scaffold/internal/middleware"
+	"go-scaffold/internal/svc"
 	"time"
 
 	"github.com/zeromicro/go-zero/rest"

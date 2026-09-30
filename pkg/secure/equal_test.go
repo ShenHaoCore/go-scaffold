@@ -3,7 +3,7 @@ package secure_test
 import (
 	"testing"
 
-	"micro-scaffold/pkg/secure"
+	"go-scaffold/pkg/secure"
 
 	"github.com/stretchr/testify/require"
 )

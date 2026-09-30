@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"micro-scaffold/internal/config"
-	"micro-scaffold/pkg/health"
+	"go-scaffold/internal/config"
+	"go-scaffold/pkg/health"
 )
 
 // SetSQLOpenForTest 仅供单测替换 sql.Open；返回 restore。

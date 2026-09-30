@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"micro-scaffold/internal/config"
-	"micro-scaffold/pkg/env"
-	"micro-scaffold/pkg/grpcx"
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/internal/config"
+	"go-scaffold/pkg/env"
+	"go-scaffold/pkg/grpcx"
+	"go-scaffold/pkg/logger"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"

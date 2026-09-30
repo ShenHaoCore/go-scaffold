@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/grpcx"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/grpcx"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"

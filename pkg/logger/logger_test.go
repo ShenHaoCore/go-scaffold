@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"micro-scaffold/pkg/logger"
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/pkg/logger"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 	"github.com/zeromicro/go-zero/core/logx"

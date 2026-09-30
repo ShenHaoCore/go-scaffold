@@ -3,7 +3,7 @@ package env_test
 import (
 	"testing"
 
-	"micro-scaffold/pkg/env"
+	"go-scaffold/pkg/env"
 
 	"github.com/stretchr/testify/require"
 )

@@ -1,6 +1,6 @@
 # Phase 2 SDK 接入说明
 
-> 本文件跟踪 **micro-scaffold** 侧的 SDK 挂载契约。
+> 本文件跟踪 **go-scaffold** 侧的 SDK 挂载契约。
 >
 > **脚手架：** 框架能力 + `api/sdk-interfaces` + `pkg/auth` 适配器预留。  
 > **独立 Module：** 埋点等能力由业务侧自行 `go get`；**权限 SDK 由独立仓开发、待合并**，勿在本工作区另起一套。

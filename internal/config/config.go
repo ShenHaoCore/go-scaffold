@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"micro-scaffold/pkg/cloud"
-	"micro-scaffold/pkg/env"
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/pkg/cloud"
+	"go-scaffold/pkg/env"
+	"go-scaffold/pkg/logger"
 
 	"github.com/joho/godotenv"
 	"github.com/zeromicro/go-zero/core/conf"

@@ -3,7 +3,7 @@ package cloud_test
 import (
 	"testing"
 
-	"micro-scaffold/pkg/cloud"
+	"go-scaffold/pkg/cloud"
 
 	"github.com/stretchr/testify/require"
 )

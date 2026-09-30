@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	bizerr "micro-scaffold/pkg/errors"
+	bizerr "go-scaffold/pkg/errors"
 )
 
 // LangMiddleware 将 Accept-Language 写入 context，供 i18n / NewFromContext 使用。

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	bizerr "micro-scaffold/pkg/errors"
+	bizerr "go-scaffold/pkg/errors"
 )
 
 // ErrSDKDenied 权限 SDK 返回的无权限（映射 COM4002）。

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"micro-scaffold/pkg/env"
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/pkg/env"
+	"go-scaffold/pkg/logger"
 
 	sls "github.com/aliyun/aliyun-log-go-sdk"
 	"github.com/gogo/protobuf/proto"

@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"micro-scaffold/internal/middleware"
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/internal/middleware"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 	"github.com/zeromicro/go-zero/core/logx"

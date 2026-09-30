@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	"micro-scaffold/pkg/env"
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/trace"
+	"go-scaffold/pkg/env"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/trace"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

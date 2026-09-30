@@ -8,11 +8,11 @@ import (
 	"path"
 	"strings"
 
-	"micro-scaffold/pkg/auth"
-	"micro-scaffold/pkg/env"
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/secure"
+	"go-scaffold/pkg/auth"
+	"go-scaffold/pkg/env"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/secure"
 )
 
 const healthProbeTokenHeader = "X-Health-Probe-Token"

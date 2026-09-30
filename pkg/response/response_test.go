@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/trace"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	bizerr "micro-scaffold/pkg/errors"
+	bizerr "go-scaffold/pkg/errors"
 
 	"github.com/stretchr/testify/require"
 )

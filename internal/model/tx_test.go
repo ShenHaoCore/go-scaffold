@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"micro-scaffold/internal/model"
-	"micro-scaffold/internal/repo"
+	"go-scaffold/internal/model"
+	"go-scaffold/internal/repo"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"

@@ -40,7 +40,7 @@ func TestStartHotReload_RequiresTokenWheneverEtcdConfigured(t *testing.T) {
 	t.Setenv("ETCD_ALLOW_INSECURE", "true")
 	for _, appEnv := range []string{"dev", "test", "prod"} {
 		t.Setenv("APP_ENV", appEnv)
-		err := StartHotReload(context.Background(), EtcdConf{Hosts: []string{"127.0.0.1:2379"}, Key: "micro-scaffold/config"})
+		err := StartHotReload(context.Background(), EtcdConf{Hosts: []string{"127.0.0.1:2379"}, Key: "go-scaffold/config"})
 		require.Error(t, err, "APP_ENV=%s", appEnv)
 		require.Contains(t, err.Error(), "ETCD_HOTRELOAD_TOKEN")
 	}

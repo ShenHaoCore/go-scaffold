@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"micro-scaffold/internal/config"
-	"micro-scaffold/internal/svc"
-	"micro-scaffold/pkg/health"
+	"go-scaffold/internal/config"
+	"go-scaffold/internal/svc"
+	"go-scaffold/pkg/health"
 
 	"github.com/stretchr/testify/require"
 )

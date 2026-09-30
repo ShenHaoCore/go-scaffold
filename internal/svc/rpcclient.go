@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
-	"micro-scaffold/internal/config"
-	"micro-scaffold/pkg/grpcx"
-	"micro-scaffold/pkg/health"
+	"go-scaffold/internal/config"
+	"go-scaffold/pkg/grpcx"
+	"go-scaffold/pkg/health"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"

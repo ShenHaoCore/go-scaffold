@@ -2,7 +2,7 @@
   警告：本模板仅供 goctl 参考，不是运行时真源。
   真实入口：cmd/rpc/main.go（config.Load、热更、gRPC Health、RegisterServerInterceptors）。
   Phase 1 禁止 goctl rpc --zrpc_out 覆盖 cmd/rpc。
-  克隆到其他 module 时把下方 "micro-scaffold/pkg/grpcx" 改为本模块路径。
+  克隆到其他 module 时把下方 "go-scaffold/pkg/grpcx" 改为本模块路径。
   真源入口用 -f config（目录）；下方 etc/*.yaml 仅为 goctl 默认示意，勿照抄。
 */}}
 package main
@@ -13,7 +13,7 @@ import (
 
 	{{.imports}}
 
-	"micro-scaffold/pkg/grpcx"
+	"go-scaffold/pkg/grpcx"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

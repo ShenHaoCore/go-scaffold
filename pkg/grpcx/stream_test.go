@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	bizerr "micro-scaffold/pkg/errors"
-	"micro-scaffold/pkg/grpcx"
-	"micro-scaffold/pkg/response"
-	"micro-scaffold/pkg/trace"
+	bizerr "go-scaffold/pkg/errors"
+	"go-scaffold/pkg/grpcx"
+	"go-scaffold/pkg/response"
+	"go-scaffold/pkg/trace"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"

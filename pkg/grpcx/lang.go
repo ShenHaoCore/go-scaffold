@@ -3,7 +3,7 @@ package grpcx
 import (
 	"context"
 
-	bizerr "micro-scaffold/pkg/errors"
+	bizerr "go-scaffold/pkg/errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"

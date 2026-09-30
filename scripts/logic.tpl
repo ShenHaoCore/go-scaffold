@@ -3,8 +3,8 @@ package {{API}}
 import (
 	"context"
 
-	"micro-scaffold/internal/svc"
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/internal/svc"
+	"go-scaffold/pkg/logger"
 )
 
 // {{API}}Logic 由 make newlogic 生成的骨架；请按业务补全。

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"micro-scaffold/internal/config"
+	"go-scaffold/internal/config"
 
 	"github.com/stretchr/testify/require"
 	"github.com/zeromicro/go-zero/core/logx"

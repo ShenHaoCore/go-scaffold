@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"micro-scaffold/pkg/health"
+	"go-scaffold/pkg/health"
 
 	"github.com/stretchr/testify/require"
 )

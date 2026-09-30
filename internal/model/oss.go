@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"micro-scaffold/pkg/env"
-	"micro-scaffold/pkg/logger"
+	"go-scaffold/pkg/env"
+	"go-scaffold/pkg/logger"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/zeromicro/go-zero/core/logx"

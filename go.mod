@@ -1,4 +1,4 @@
-module micro-scaffold
+module go-scaffold
 
 go 1.22
 
@@ -18,6 +18,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.15
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
 	google.golang.org/grpc v1.65.0
+	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -115,7 +116,6 @@ require (
 	golang.org/x/time v0.7.0 // indirect
 	google.golang.org/api v0.102.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240711142825-46eb208f015d // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"micro-scaffold/internal/config"
-	"micro-scaffold/internal/svc"
-	"micro-scaffold/pkg/auth"
+	"go-scaffold/internal/config"
+	"go-scaffold/internal/svc"
+	"go-scaffold/pkg/auth"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"

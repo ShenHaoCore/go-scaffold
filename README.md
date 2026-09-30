@@ -1,6 +1,6 @@
-# micro-scaffold — 通用微服务脚手架
+# go-scaffold — 通用微服务脚手架
 
-基于 go-zero。Go module：`micro-scaffold`；进程：`scaffold-api` / `scaffold-rpc`。仅 **health** 与框架能力，**无**业务域示例；业务向 SDK 由服务自行 `go get`（见 [integration-spec.md](./integration-spec.md)）。
+基于 go-zero。Go module：`go-scaffold`；进程：`scaffold-api` / `scaffold-rpc`。仅 **health** 与框架能力，**无**业务域示例；业务向 SDK 由服务自行 `go get`（见 [integration-spec.md](./integration-spec.md)）。
 
 引擎：**PostgreSQL 18.0**（pgx）+ 可选 Redis。错误码：`COM*`。
 
@@ -32,7 +32,7 @@ curl -i http://127.0.0.1:8080/health/live
 RPC：业务自备 proto，用 `protoc` 更新 `api/pb/`。**禁止** `goctl rpc --zrpc_out` 覆盖 `cmd/rpc`。
 
 ```go
-import bizerr "micro-scaffold/pkg/errors"
+import bizerr "go-scaffold/pkg/errors"
 return nil, bizerr.NewFromContext(ctx, bizerr.CodeInvalidParam, map[string]any{"Field": "name"})
 ```
 
@@ -88,7 +88,7 @@ cli := userpb.NewUserClient(conn)
 ## 目录
 
 ```text
-micro-scaffold/
+go-scaffold/
 ├── api/desc/、api/pb/
 ├── cmd/api、cmd/rpc
 ├── config/、migrations/、deploy/、templates/

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"micro-scaffold/internal/repo"
+	"go-scaffold/internal/repo"
 
 	"github.com/stretchr/testify/require"
 )

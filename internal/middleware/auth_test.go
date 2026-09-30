@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"micro-scaffold/internal/middleware"
-	"micro-scaffold/pkg/auth"
-	bizerr "micro-scaffold/pkg/errors"
+	"go-scaffold/internal/middleware"
+	"go-scaffold/pkg/auth"
+	bizerr "go-scaffold/pkg/errors"
 
 	"github.com/stretchr/testify/require"
 )
