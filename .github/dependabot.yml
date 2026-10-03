@@ -10,3 +10,11 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(ci)"
+    ignore:
+      # golangci-lint-action ≥ v7 只支持 golangci-lint **v2**；本仓 Makefile 的
+      # GOLANGCI_LINT_WANT 与 .golangci.yml 都还是 v1（v1.64.8），升上去 lint job
+      # 直接报 `invalid version string 'v1.64.8', golangci-lint v1 is not supported
+      # by golangci-lint-action >= v7`（PR #3 实测）。action 的大版本与我们的
+      # golangci-lint 主版本是绑定的，所以屏蔽 major 更新；迁移到 v2 时删掉本段。
+      - dependency-name: "golangci/golangci-lint-action"
+        update-types: ["version-update:semver-major"]
