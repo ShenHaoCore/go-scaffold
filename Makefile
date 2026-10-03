@@ -1,7 +1,7 @@
 .PHONY: init deps tools gen build docker docker-build test test-race test-coverage lint clean \
 	up down run run-api run-rpc run-all dev \
 	migrate-up migrate-down migrate-force setup-migrate setup-lint \
-	check-goctl check-go-zero check-templates check-protoc init-templates update-templates \
+	check-goctl check-go-zero check-templates check-protoc check-routes init-templates update-templates \
 	newlogic print-config-key
 
 APP_NAME ?= scaffold
@@ -72,6 +72,24 @@ check-templates:
 		echo "ERROR: templates/api/handler.tpl not found. Run: make init-templates"; \
 		exit 1; \
 	}
+
+# routes.go 是生成物：`make gen` 末尾无条件执行
+#   cp scripts/handwritten/routes.go.in internal/handler/routes.go
+# 因此 routes.go.in 才是路由真源。若有人只改了 routes.go 而忘了同步 .in，
+# 下一次 make gen 会把他的改动**静默抹掉**（不报错、无提示）—— 这是本仓唯一
+# 会无声丢代码的路径，故设门禁：漂移即失败。本地与 CI 共用此目标。
+check-routes:
+	@if diff -u scripts/handwritten/routes.go.in internal/handler/routes.go; then \
+		echo "routes.go == routes.go.in OK"; \
+	else \
+		echo ""; \
+		echo "ERROR: internal/handler/routes.go 与 scripts/handwritten/routes.go.in 漂移。"; \
+		echo "       真源是 routes.go.in；make gen 会用它无条件覆盖 routes.go，"; \
+		echo "       只改 routes.go 而未同步 .in 时，改动会在下次 make gen 静默丢失。"; \
+		echo "       修法一（推荐）：把改动并入 routes.go.in；"; \
+		echo "       修法二（放弃 routes.go 的改动）：cp scripts/handwritten/routes.go.in internal/handler/routes.go"; \
+		exit 1; \
+	fi
 
 check-protoc:
 	@protos=$$(find api/desc -name '*.proto' 2>/dev/null | head -1); \

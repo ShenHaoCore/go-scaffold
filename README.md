@@ -188,6 +188,7 @@ cli := userpb.NewUserClient(conn)
 | `make migrate-up` / `migrate-down` / `migrate-force` | 迁移（须 `DB_DSN`；`force` 用于修 dirty 状态） |
 | `make tools` | 安装 goctl / migrate / goreman / air / protoc-gen-* / golangci-lint |
 | `make print-config-key` | 打印 Etcd Key 提示 |
+| `make check-routes` | 校验 `routes.go` 与 `routes.go.in` 无漂移（CI 必过；漂移意味着手改的 routes.go 会被下次 `make gen` 静默覆盖） |
 | `make clean` | 清 `output/` 与覆盖率产物 |
 
 ## CI
@@ -196,7 +197,7 @@ cli := userpb.NewUserClient(conn)
 
 | job | 内容 |
 |-----|------|
-| `lint` | `gofmt -l`、`make check-go-zero check-templates`、golangci-lint（配置见 `.golangci.yml`） |
+| `lint` | `gofmt -l`、`make check-go-zero check-templates check-routes`、golangci-lint（配置见 `.golangci.yml`） |
 | `test` | `make test-race`（`APP_ENV=test`，含 `-race` + 覆盖率产物） |
 | `build` | `make build` + 按 Dockerfile 同参（`CGO_ENABLED=0`）构建 linux/amd64 与 linux/arm64 |
 
@@ -213,7 +214,7 @@ Go 版本取自 `go.mod` 的 `go 1.22`（与 Dockerfile 对齐），不写死。
 | 鉴权 | `dev` 放行；`require` = 非空 Bearer（**非 JWT**，内部门闩）；公网须等 `Mode=sdk`（权限 SDK 待合并） |
 | ORM | go-zero model + sqlx；logic 只依赖 `internal/repo`；软删表登记 `SoftDeleteRequiredTables`（默认可空） |
 | SDK | 本仓不引入业务 SDK；埋点等由业务 `go get`，契约见 [`integration-spec.md`](./integration-spec.md) |
-| 生成物 | `make gen` 后 `internal/handler/routes.go` 应逐字节等于 `scripts/handwritten/routes.go.in`；`templates/` 非运行时真源 |
+| 生成物 | `internal/handler/routes.go` 须逐字节等于 `scripts/handwritten/routes.go.in` —— 后者是真源，`make gen` 会用**前者覆盖后者**的方向回填；漂移由 `make check-routes` 在 CI 拦住（否则手改的 routes.go 会在下次 gen 时静默丢失）。`templates/` 非运行时真源 |
 
 **已知边界**（有意保留，不是 bug）
 

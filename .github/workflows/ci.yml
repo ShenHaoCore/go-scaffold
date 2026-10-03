@@ -48,9 +48,11 @@ jobs:
             exit 1
           fi
 
-      # 纯 grep 实现，不需要安装 goctl；守住 go-zero 版本与模板目录
-      - name: go-zero / templates 门禁
-        run: make check-go-zero check-templates
+      # 纯 shell 实现，不需要安装 goctl；守住 go-zero 版本、模板目录与路由真源。
+      # check-routes：routes.go.in 才是路由真源，make gen 会用它无条件覆盖
+      # routes.go —— 两者漂移意味着手改的内容会在下次 gen 时静默丢失。
+      - name: go-zero / templates / routes 门禁
+        run: make check-go-zero check-templates check-routes
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
