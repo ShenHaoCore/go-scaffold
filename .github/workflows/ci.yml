@@ -1,0 +1,117 @@
+# 本仓唯一 CI（原 .gitlab-ci.yml 已删除：origin 是 GitHub，GitLab 那份从不运行）。
+#
+# 设计取舍：
+# - Go 版本取自 go.mod 的 `go 1.22`（与 Dockerfile 的 golang:1.22-alpine 对齐），
+#   不写死版本号 —— 将来升级 go 指令时 CI 自动跟随。
+# - lint 走官方 action（下载预编译二进制），绕开「golangci-lint 能否被当前 Go 编译」这个坑：
+#   v1.55.2 在 Go ≥1.25 上根本构建不出来（详见 Makefile 的 setup-lint 注释）。
+# - `-race` 只在这里跑：开发机是 windows/386，该平台不支持 -race。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 同分支的新 push 取消旧 run：省额度，也避免过期结果覆盖最新状态
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# 最小权限；本 workflow 只读代码
+permissions:
+  contents: read
+
+env:
+  GOLANGCI_LINT_VERSION: v1.64.8
+
+jobs:
+  lint:
+    name: lint (golangci-lint / gofmt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # golangci-lint 不含 gofmt 检查，而本仓对行尾（.gitattributes 锁 eol=lf）与格式敏感
+      - name: gofmt
+        run: |
+          bad=$(gofmt -l ./cmd ./internal ./pkg)
+          if [ -n "$bad" ]; then
+            echo "::error::以下文件未格式化，请运行 gofmt -w ./cmd ./internal ./pkg"
+            echo "$bad"
+            exit 1
+          fi
+
+      # 纯 grep 实现，不需要安装 goctl；守住 go-zero 版本与模板目录
+      - name: go-zero / templates 门禁
+        run: make check-go-zero check-templates
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+
+  test:
+    name: test (-race)
+    runs-on: ubuntu-latest
+    env:
+      # 与 config/test.yaml、README 的本地口径一致（非 prod 允许无 DSN 启动）
+      APP_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go test -race
+        run: make test-race
+
+      - name: 覆盖率
+        run: go tool cover -func=coverage.out | tail -1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+          if-no-files-found: ignore
+
+  build:
+    name: build (linux/amd64+arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: make build
+        run: make build
+
+      # 与 Dockerfile 同参：CGO_ENABLED=0 + 双架构（Dockerfile 的 TARGETARCH 只允许 amd64|arm64）
+      - name: 与镜像同参构建
+        run: |
+          for arch in amd64 arm64; do
+            for cmd in api rpc; do
+              CGO_ENABLED=0 GOOS=linux GOARCH="$arch" \
+                go build -o "output/scaffold-${cmd}-linux-${arch}" "./cmd/${cmd}"
+            done
+          done
+          ls -l output/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: output/
+          retention-days: 3

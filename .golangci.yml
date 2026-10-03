@@ -1,6 +1,8 @@
-# golangci-lint v1.55.x（与 make tools 安装版本对齐）
+# golangci-lint v1.64.x（与 Makefile 的 GOLANGCI_LINT_WANT 对齐）
+# CI 见 .github/workflows/ci.yml（用官方 action 下载预编译二进制，按本文件配置实跑，必过）。
 run:
-  timeout: 5m
+  # 本地（32 位、缓存冷）实测约 1.5~3 分钟；CI 冷缓存给足余量
+  timeout: 10m
   tests: true
 
 linters:
@@ -17,10 +19,38 @@ linters-settings:
     enable-all: true
     disable:
       - fieldalignment
+      # shadow 不在 go vet 默认集合里（官方认为误报率高）。本仓 `if err := ...` 的惯用写法
+      # 会被它逐条报成「err 遮蔽了外层 err」，而这些遮蔽都是良性的（内层作用域用完即弃）。
+      # 与其逐点写 exclude-rule 豁免，不如直接关掉这个分析器，语义更清楚。
+      - shadow
   staticcheck:
+    # 注意：golangci-lint 把 staticcheck 拆成三个独立 linter —— staticcheck(SA*)、
+    # gosimple(S*)、stylecheck(ST*)。此处 checks 只作用于已 enable 的 staticcheck(SA*)。
     checks: ["all"]
 
 issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+
+  # 仅豁免「工具与 go-zero DSL 语义冲突」的误报，且尽量收窄到路径 + 文案。
+  # 新增豁免必须同时写清理由；用 `make lint` 实测到 0 条为准。
+  exclude-rules:
+    # go-zero 配置 DSL：`json:",optional"` / `json:",default=node"` 是 conf 包的标签语法，
+    # 不是标准 encoding/json 的 tag 选项，SA5008 在此必然误报。配置结构体都住在本包，
+    # 因此把豁免限制在 internal/config/ 内 —— 别处的真·坏 tag 仍会被抓出来。
+    - path: (^|[\\/])internal[\\/]config[\\/]
+      linters: [staticcheck]
+      text: SA5008
+
+    # 单测故意传 nil ctx（断言「畸形输入不 panic」这条契约）、故意用匿名结构体当
+    # context key（断言 key 碰撞防护）。生产代码不得如此，故豁免只在 _test.go 生效。
+    - path: _test\.go
+      linters: [staticcheck]
+      text: SA1012|SA1029
+
+    # tx_test.go 的 *sql.DB 由 sqlmock 构造，Close 无实际 I/O，返回值无信息量。
+    # 只豁免这一处：errcheck 在其余（含测试）文件仍全量生效。
+    - path: (^|[\\/])internal[\\/]model[\\/]tx_test\.go
+      linters: [errcheck]
+      text: db\.Close

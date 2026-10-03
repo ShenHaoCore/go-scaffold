@@ -1,0 +1,12 @@
+# 只跟 GitHub Actions 的版本。gomod 是**故意**不纳入的：
+# go-zero 版本由 make check-go-zero 钉在 v1.7.3、代码生成工具版本另有门禁，
+# 自动升级会与这些约束打架，升级应由人显式决策。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"

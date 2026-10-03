@@ -1,4 +1,4 @@
-.PHONY: init deps tools gen build docker docker-build test test-coverage lint clean \
+.PHONY: init deps tools gen build docker docker-build test test-race test-coverage lint clean \
 	up down run run-api run-rpc run-all dev \
 	migrate-up migrate-down migrate-force setup-migrate setup-lint \
 	check-goctl check-go-zero check-templates check-protoc init-templates update-templates \
@@ -10,7 +10,7 @@ GOCTL_WANT := 1.7.3
 GOZERO_WANT := v1.7.3
 MIGRATE_WANT := v4.17.1
 GOREMAN_WANT := v0.3.15
-GOLANGCI_LINT_WANT := v1.55.2
+GOLANGCI_LINT_WANT := v1.64.8
 
 init: deps setup-migrate
 
@@ -22,7 +22,7 @@ deps:
 # protoc 本体须系统安装；此处安装 Go 插件
 #
 # 顺序：代码生成工具在前，golangci-lint 最后。
-# 理由：golangci-lint 是本组里唯一会因 Go 版本而构建失败的（见 setup-lint 注释），
+# 理由：golangci-lint 是本组里最大也最挑 Go 版本的一个（见 setup-lint 注释），
 # make 遇错即停，把它排在前面会让 goctl / protoc-gen-* / air 一起装不上。
 tools:
 	$(GO) install github.com/zeromicro/go-zero/tools/goctl@v$(GOCTL_WANT)
@@ -175,18 +175,28 @@ docker-build: docker
 test:
 	$(GO) test ./... -count=1
 
+# 竞态检测。本机是 windows/386，该平台不支持 -race ⇒ CI（linux/amd64）是唯一能跑它的地方。
+# -race 与 -covermode=atomic 是官方要求的搭配（默认的 set 模式在并发下计数不准）。
+# 用了 -coverprofile 就必须与 -count=1 一致（多轮计数会串），故这里显式带 -count=1。
+test-race:
+	$(GO) test -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
+
 test-coverage:
 	$(GO) test ./... -coverprofile=coverage.out || true
 	@if [ -f coverage.out ]; then $(GO) tool cover -func=coverage.out; else echo "WARN: coverage.out not generated"; fi
 
-# 安装 golangci-lint（版本与 .golangci.yml 头注释 / make tools 一致）；CI 的 lint job 依赖它。
+# 安装 golangci-lint（版本三处一致：此处 / .golangci.yml 头注释 / .github/workflows/ci.yml 的
+# GOLANGCI_LINT_VERSION）。
 #
-# 版本约束（实测）：@v1.55.2 拉到的 golang.org/x/tools v0.14.0 用
-# `var _ [-delta*delta]int` 做编译期断言，Go ≥1.25 改了 token.FileSet 布局后断言失败：
-#   x/tools@v0.14.0/internal/tokeninternal/tokeninternal.go:78:9:
-#     invalid array length -delta * delta (constant -64 of type int64)
-# 即 v1.55.2 无法用 Go ≥1.25 构建（CI 的 golang:1.22 镜像不受影响；Go 1.25+ 的本机会失败）。
-# 要在新 Go 上本地跑 lint，把 GOLANGCI_LINT_WANT 提到 v1.64.x（已实测 v1.64.8 可构建）。
+# 版本约束（实测）：
+#   - @v1.55.2 拉到的 golang.org/x/tools v0.14.0 用 `var _ [-delta*delta]int` 做编译期断言，
+#     Go ≥1.25 改了 token.FileSet 布局后断言失败：
+#       x/tools@v0.14.0/internal/tokeninternal/tokeninternal.go:78:9:
+#         invalid array length -delta * delta (constant -64 of type int64)
+#     ⇒ 在 Go ≥1.25 的机器上装不上。
+#   - @v1.64.8 在 Go 1.26 上实测可构建，且仍支持本仓的 v1 版 .golangci.yml，故选它。
+#     注意它自身 go.mod 要求 go ≥1.23 ⇒ Go 1.22 的本机仍装不上（CI 不受影响：workflow 用
+#     官方 action 下载预编译二进制，不编译源码）。
 setup-lint:
 	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_WANT)
 

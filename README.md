@@ -1,5 +1,7 @@
 # go-scaffold — 通用微服务脚手架
 
+[![CI](https://github.com/ShenHaoCore/go-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/ShenHaoCore/go-scaffold/actions/workflows/ci.yml)
+
 基于 go-zero。Go module：`go-scaffold`；进程：`scaffold-api` / `scaffold-rpc`。仅 **health** 与框架能力，**无**业务域示例；业务向 SDK 由服务自行 `go get`（见 [integration-spec.md](./integration-spec.md)）。
 
 引擎：**PostgreSQL 18.0**（pgx）+ 可选 Redis。错误码：`COM*`。
@@ -102,6 +104,23 @@ go-scaffold/
 | 命令 | 说明 |
 |------|------|
 | `make dev` | 一键本地起 |
-| `make build` / `test` / `setup-lint` + `lint` | 构建 / 测试 / 静态检查（lint 需先 `make setup-lint` 装 golangci-lint，不再静默降级为 `go vet`） |
+| `make build` / `test` / `test-race` | 构建 / 测试（`-count=1`）/ 竞态检测（`-race`，windows/386 上不可用，由 CI 跑） |
+| `make setup-lint` + `lint` | 静态检查（需先装 golangci-lint@v1.64.8；缺工具时**直接失败**，不再静默降级为 `go vet`） |
 | `make migrate-up` / `migrate-down` | 迁移（须 `DB_DSN`） |
 | `make print-config-key` | Etcd Key 提示 |
+
+## CI
+
+`.github/workflows/ci.yml`（本仓唯一 CI）。三个 job 并行，全部为**必过门禁**：
+
+| job | 内容 |
+|-----|------|
+| `lint` | `gofmt -l`、`make check-go-zero check-templates`、golangci-lint（配置见 `.golangci.yml`） |
+| `test` | `make test-race`（`APP_ENV=test`，含 `-race` + 覆盖率产物） |
+| `build` | `make build` + 按 Dockerfile 同参（`CGO_ENABLED=0`）构建 linux/amd64 与 linux/arm64 |
+
+Go 版本取自 `go.mod` 的 `go 1.22`（与 Dockerfile 对齐），不写死。`-race` 只能在这里跑——
+开发机是 windows/386，该平台不支持竞态检测。
+
+`make lint` 默认必须 0 条：与 go-zero 配置 DSL 冲突的误报（`SA5008` 等）已在 `.golangci.yml`
+的 `issues.exclude-rules` 里按「路径 + 文案」精确豁免，新增豁免必须写清理由。
