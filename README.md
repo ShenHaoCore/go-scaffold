@@ -57,6 +57,15 @@ curl -i http://127.0.0.1:8080/health/live
 
 镜像：`make docker`（用 `IMAGE=registry/scaffold:sha` 覆盖标签）。
 
+**一键脚本**（`make dev` 的增强版，会**等 PG 真正就绪**再往下走，避免库没起来时 migrate 直接失败）：
+
+| 脚本 | 平台 | 用法 |
+|------|------|------|
+| `scripts/dev-up.sh` | Git Bash / WSL / macOS / Linux | `./scripts/dev-up.sh [--migrate] [--skip-compose]` |
+| `scripts/dev-up.ps1` | Windows PowerShell | `powershell -File scripts\dev-up.ps1 [-Migrate] [-SkipCompose] [-Tunnel]` |
+
+连云上的库/中间件（内网不通）见 [`scripts/cloud/README.md`](./scripts/cloud/README.md) —— 跳板机 SSH 隧道把远端端口映射到本地。
+
 ## 配置
 
 优先级从低到高，后者覆盖前者：
@@ -89,7 +98,7 @@ go-scaffold/
 ├── internal/              # config、handler、logic、types、middleware、repo、model、svc
 ├── migrations/            # golang-migrate（*.up.sql / *.down.sql）
 ├── pkg/                   # auth、cloud、env、errors、grpcx、health、logger、response、secure、trace
-├── scripts/handwritten/   # routes.go.in —— 路由真源，make gen 后被回填
+├── scripts/               # dev-up.sh / dev-up.ps1（一键启动）、cloud/（跳板机隧道）、handwritten/（路由真源）
 ├── templates/             # goctl 模板（非运行时真源，见 templates/README.md）
 ├── Procfile、Makefile、Dockerfile、docker-compose.yml / docker-compose.full.yml
 └── integration-spec.md、.env.example、.golangci.yml、.github/workflows/ci.yml
@@ -233,4 +242,5 @@ Go 版本取自 `go.mod` 的 `go 1.22`（与 Dockerfile 对齐），不写死。
 | [`templates/README.md`](./templates/README.md) | goctl 模板说明与强制约定自检表 |
 | [`migrations/README.md`](./migrations/README.md) | 迁移约定 |
 | [`scripts/handwritten/README.md`](./scripts/handwritten/README.md) | 手写路由与 gen 回填机制 |
+| [`scripts/cloud/README.md`](./scripts/cloud/README.md) | 跳板机 SSH 隧道连云端 RDS / Redis / MQ 的本地联调路径 |
 | [`.env.example`](./.env.example) | 全部环境变量与语义注释 |
